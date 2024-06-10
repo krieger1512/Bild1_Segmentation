@@ -19,10 +19,7 @@ def resize(image, ratio):
 
 def find_sure_fg(foreground_factor, image):
     dist_transform = cv2.distanceTransform(image, cv2.DIST_L2, cv2.DIST_MASK_5)
-    dist_output = cv2.normalize(
-        dist_transform, None, 0, 1.0, cv2.NORM_MINMAX
-    )  # Make the distance transform normal
-    plot_gray(dist_output)
+    # plot_gray(cv2.normalize(dist_transform, None, 0, 1.0, cv2.NORM_MINMAX))
     _, sure_fg = cv2.threshold(
         dist_transform, foreground_factor * dist_transform.max(), 255, 0
     )
@@ -94,7 +91,7 @@ def watershed_segment(
 
     # Find sure foreground area
     sure_fg = find_sure_fg(foreground_factor, image=closed)
-    plot_gray(sure_fg)
+    # plot_gray(sure_fg)
 
     # Find unknown region
     sure_fg = np.uint8(sure_fg)
@@ -108,10 +105,12 @@ def watershed_segment(
     # Add one to all labels so that sure background is not 0, but 1
     markers = markers + 1
 
-    # Now, mark the region of unknown with zero
+    # Mark the region of unknown with zero
     markers[unknown == 255] = 0
 
+    # Apply watershed
     markers = cv2.watershed(image, markers)
+    # plot_gray(markers)
     image[markers == -1] = [0, 255, 0]
     plot_rgb(image)
 
@@ -125,8 +124,8 @@ if __name__ == "__main__":
         resize_ratio=0.25,
         blurring_kernel_size=(7, 7),
         closing_kernel_size=(5, 5),
-        closing_iterations=4,
+        closing_iterations=6,  # 4; 6
         dilate_kernel_size=(5, 5),
         dilate_iterations=10,
-        foreground_factor=0.239,
+        foreground_factor=0.26,  # 0.239; 0.26
     )
