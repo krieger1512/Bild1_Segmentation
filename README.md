@@ -6,7 +6,15 @@ Given an image with objects of recognizable shapes, divide the image into segmen
 
 This work aims to solve simple image segmentation task with traditional computer vision algorithms instead of machine learning models.
 
-
+Next steps:
+- Watershed with color segmentation and segmentated image
+- Canny
+- Color segmentation
+- Adaptive Thresholding: Improve edge detection by using adaptive thresholding techniques before applying Canny.
+- K-Means clustering
+- Performance comparison
+  
+Area for Nilsblack "window": twice the size of object
 
 We will break down this problems into smaller tasks:
 1. Read the Image: Load the image using OpenCV.
