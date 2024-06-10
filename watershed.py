@@ -77,7 +77,7 @@ def watershed_segment(
         255,
         cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU,
     )
-    # plot_gray(thresh, "Binarized Image")
+    plot_gray(thresh, "Binarized Image")
 
     # Close small holes (black points) inside foreground objects
     closed = cv2.morphologyEx(
@@ -86,7 +86,7 @@ def watershed_segment(
         kernel=np.ones(closing_kernel_size, np.uint8),
         iterations=closing_iterations,
     )
-    # plot_gray(closed, "Closed Image")
+    plot_gray(closed, "Closed Image")
 
     # Find sure background area
     sure_bg = cv2.dilate(
@@ -117,11 +117,11 @@ def watershed_segment(
 
     # Apply watershed
     markers = cv2.watershed(image, markers)
-    # plot_gray(markers, "Segments")
+    plot_gray(markers, "Segments")
     image[markers == -1] = [0, 255, 0]
     # plot_rgb(image, "Segmented Image")
 
-    # plt.show()
+    plt.show()
     return image
 
 
@@ -163,7 +163,7 @@ def create_trackbar_window():
     cv2.namedWindow(window_name)
     cv2.resizeWindow(window_name, 1000, 320)
 
-    cv2.createTrackbar("Image", window_name, 1, 2, update_image)
+    cv2.createTrackbar("Image", window_name, 1, 3, update_image)
     cv2.createTrackbar("Resize(%)", window_name, 25, 100, update_image)
 
     cv2.createTrackbar("Blur KS", window_name, 3, 13, update_image)
@@ -178,8 +178,11 @@ def create_trackbar_window():
 
 if __name__ == "__main__":
 
+    # If you want to check the interim results during segmentation,
+    # remember to uncomment the plot_gray()/plot_rgb() and the final plt.show() in watershed_segment()
+
     # watershed_segment(
-    #     image_name="art.jpg",
+    #     image_name="1.jpg",
     #     resize_ratio=0.25,
     #     blurring_kernel_size=(7, 7),
     #     closing_kernel_size=(5, 5),
@@ -189,7 +192,21 @@ if __name__ == "__main__":
     #     foreground_thresh=0.26,  # 0.239; 0.26
     # )
 
-    create_trackbar_window()
-    while True:
-        update_image(0)
-        cv2.waitKey(1)
+    watershed_segment(
+        image_name="3.jpg",
+        resize_ratio=1,
+        blurring_kernel_size=(5, 5),
+        closing_kernel_size=(3, 3),
+        closing_iterations=1,
+        dilate_kernel_size=(3, 3),
+        dilate_iterations=1,
+        foreground_thresh=0.37,
+    )
+
+    # If you want to check the influence of different parameters on the segmentation,
+    # remember to comment all the plot_gray()/plot_rgb() and the final plt.show() in watershed_segment()
+
+    # create_trackbar_window()
+    # while True:
+    #     update_image(0)
+    #     cv2.waitKey(1)
