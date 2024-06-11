@@ -173,19 +173,19 @@ def get_type(trackbar_name, window_name):
     return type
 
 
-def create_trackbar_window():
+def create_trackbar_window(number_of_images, kernel_size_limit, iteration_limit):
     window_name = "Watershed Playground"
     cv2.namedWindow(window_name)
     cv2.resizeWindow(window_name, 1000, 340)
 
-    cv2.createTrackbar("Image", window_name, 1, 3, update_image)
+    cv2.createTrackbar("Image", window_name, 1, number_of_images, update_image)
     cv2.createTrackbar("Resize(%)", window_name, 25, 100, update_image)
-    cv2.createTrackbar("Blur KS", window_name, 3, 13, update_image)
+    cv2.createTrackbar("Blur KS", window_name, 3, kernel_size_limit, update_image)
     cv2.createTrackbar("Open/Close", window_name, 1, 1, update_image)
-    cv2.createTrackbar("Morph KS", window_name, 3, 13, update_image)
-    cv2.createTrackbar("Morph Ite", window_name, 1, 50, update_image)
-    cv2.createTrackbar("Dilate KS", window_name, 3, 13, update_image)
-    cv2.createTrackbar("Dilate Ite", window_name, 1, 50, update_image)
+    cv2.createTrackbar("Morph KS", window_name, 3, kernel_size_limit, update_image)
+    cv2.createTrackbar("Morph Ite", window_name, 1, iteration_limit, update_image)
+    cv2.createTrackbar("Dilate KS", window_name, 3, kernel_size_limit, update_image)
+    cv2.createTrackbar("Dilate Ite", window_name, 1, iteration_limit, update_image)
     cv2.createTrackbar("FG-Thre(%)", window_name, 20, 100, update_image)
 
 
@@ -210,18 +210,22 @@ if __name__ == "__main__":
     #     image_name="3.jpg",
     #     resize_ratio=1,
     #     blurring_kernel_size=(5, 5),
-    #     morph_type=cv2.MORPH_OPEN,
+    #     morph_type=cv2.MORPH_OPEN, # Image with black background: Open
     #     morph_kernel_size=(3, 3),
-    #     morph_iterations=1,
+    #     morph_iterations=3,
     #     dilate_kernel_size=(3, 3),
     #     dilate_iterations=1,
-    #     foreground_thresh=0.37,
+    #     foreground_thresh=0.78,
     # )
 
     # If you want to check the influence of different parameters on the segmentation,
     # remember to comment all the plot_gray()/plot_rgb() and the final plt.show() in watershed_segment()
 
-    create_trackbar_window()
+    input_images = os.listdir(os.path.join(os.getcwd(), "input"))
+    jpg_files = [file for file in input_images if file.lower().endswith((".jpg"))]
+    create_trackbar_window(
+        number_of_images=len(jpg_files), kernel_size_limit=13, iteration_limit=40
+    )
     while True:
         update_image(0)
         cv2.waitKey(1)
