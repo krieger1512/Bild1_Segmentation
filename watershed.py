@@ -71,7 +71,7 @@ def watershed_segment(
     blurred = cv2.GaussianBlur(gray, blurring_kernel_size, 0)
     # plot_gray(blurred, "Blurred Image")
 
-    # Apply Otsu binarization (global adaptive thresholding); local adaptive thresholding is not possible due to no separation between foreground and background objects
+    # Apply Otsu binarization (global adaptive thresholding)
     _, thresh = cv2.threshold(
         blurred,
         0,  # This value can be selected arbitrarily due to Otsu binarization
@@ -192,7 +192,7 @@ def create_trackbar_window(number_of_images, kernel_size_limit, iteration_limit)
 if __name__ == "__main__":
 
     # If you want to check the interim results during segmentation,
-    # remember to uncomment the plot_gray()/plot_rgb() and the final plt.show() in watershed_segment()
+    # uncomment the plot_gray()/plot_rgb() and the final plt.show() in watershed_segment()
 
     # watershed_segment(
     #     image_name="1.jpg",
@@ -219,7 +219,7 @@ if __name__ == "__main__":
     # )
 
     # If you want to check the influence of different parameters on the segmentation,
-    # remember to comment all the plot_gray()/plot_rgb() and the final plt.show() in watershed_segment()
+    # comment out all the plot_gray()/plot_rgb() and the final plt.show() in watershed_segment()
 
     input_images = os.listdir(os.path.join(os.getcwd(), "input"))
     jpg_files = [file for file in input_images if file.lower().endswith((".jpg"))]
