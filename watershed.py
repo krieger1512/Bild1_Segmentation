@@ -48,8 +48,9 @@ def watershed_segment(
     image_name,
     resize_ratio,
     blurring_kernel_size,
-    closing_kernel_size,
-    closing_iterations,
+    morph_type,
+    morph_kernel_size,
+    morph_iterations,
     dilate_kernel_size,
     dilate_iterations,
     foreground_thresh,
@@ -77,27 +78,27 @@ def watershed_segment(
         255,
         cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU,
     )
-    plot_gray(thresh, "Binarized Image")
+    # plot_gray(thresh, "Binarized Image")
 
-    # Close small holes (black points) inside foreground objects
-    closed = cv2.morphologyEx(
+    # Reduce noise with morphological transformations
+    morphed = cv2.morphologyEx(
         thresh,
-        cv2.MORPH_CLOSE,
-        kernel=np.ones(closing_kernel_size, np.uint8),
-        iterations=closing_iterations,
+        morph_type,
+        kernel=np.ones(morph_kernel_size, np.uint8),
+        iterations=morph_iterations,
     )
-    plot_gray(closed, "Closed Image")
+    # plot_gray(morphed, "Morphed Image")
 
     # Find sure background area
     sure_bg = cv2.dilate(
-        closed,
+        morphed,
         kernel=np.ones(dilate_kernel_size, np.uint8),
         iterations=dilate_iterations,
     )
     # plot_gray(sure_bg, "Sure Background")
 
     # Find sure foreground area
-    sure_fg = find_sure_fg(foreground_thresh, image=closed)
+    sure_fg = find_sure_fg(foreground_thresh, image=morphed)
     # plot_gray(sure_fg, "Sure Foreground")
 
     # Find unknown region
@@ -117,28 +118,33 @@ def watershed_segment(
 
     # Apply watershed
     markers = cv2.watershed(image, markers)
-    plot_gray(markers, "Segments")
+    # plot_gray(markers, "Segments")
     image[markers == -1] = [0, 255, 0]
     # plot_rgb(image, "Segmented Image")
 
-    plt.show()
-    return image
+    # plt.show()
+    return thresh, morphed, sure_bg, sure_fg, image
 
 
 def update_image(x):
     window_name = "Watershed Playground"
 
-    image = watershed_segment(
+    thresh, morphed, sure_bg, sure_fg, image = watershed_segment(
         image_name=str(get_value("Image", window_name)) + ".jpg",
         resize_ratio=get_value("Resize(%)", window_name),
         blurring_kernel_size=get_kernel_size("Blur KS", window_name),
-        closing_kernel_size=get_kernel_size("Close KS", window_name),
-        closing_iterations=get_value("Close Ite", window_name),
+        morph_type=get_type("Open/Close", window_name),
+        morph_kernel_size=get_kernel_size("Morph KS", window_name),
+        morph_iterations=get_value("Morph Ite", window_name),
         dilate_kernel_size=get_kernel_size("Dilate KS", window_name),
         dilate_iterations=get_value("Dilate Ite", window_name),
         foreground_thresh=get_value("FG-Thre(%)", window_name),
     )
 
+    cv2.imshow("Binarization", thresh)
+    cv2.imshow("Morphological Transformations", morphed)
+    # cv2.imshow("Sure Background Area", sure_bg)
+    # cv2.imshow("Sure Foreground Area", sure_fg)
     cv2.imshow("Image Segmentation with Watershed", image)
 
 
@@ -158,21 +164,28 @@ def get_kernel_size(trackbar_name, window_name):
     return (kernel_size, kernel_size)
 
 
+def get_type(trackbar_name, window_name):
+    type = cv2.getTrackbarPos(trackbar_name, window_name)
+    if type == 0:
+        type = cv2.MORPH_OPEN
+    else:
+        type = cv2.MORPH_CLOSE
+    return type
+
+
 def create_trackbar_window():
     window_name = "Watershed Playground"
     cv2.namedWindow(window_name)
-    cv2.resizeWindow(window_name, 1000, 320)
+    cv2.resizeWindow(window_name, 1000, 340)
 
     cv2.createTrackbar("Image", window_name, 1, 3, update_image)
     cv2.createTrackbar("Resize(%)", window_name, 25, 100, update_image)
-
     cv2.createTrackbar("Blur KS", window_name, 3, 13, update_image)
-    cv2.createTrackbar("Close KS", window_name, 3, 13, update_image)
+    cv2.createTrackbar("Open/Close", window_name, 1, 1, update_image)
+    cv2.createTrackbar("Morph KS", window_name, 3, 13, update_image)
+    cv2.createTrackbar("Morph Ite", window_name, 1, 50, update_image)
     cv2.createTrackbar("Dilate KS", window_name, 3, 13, update_image)
-
-    cv2.createTrackbar("Close Ite", window_name, 1, 50, update_image)
     cv2.createTrackbar("Dilate Ite", window_name, 1, 50, update_image)
-
     cv2.createTrackbar("FG-Thre(%)", window_name, 20, 100, update_image)
 
 
@@ -185,28 +198,30 @@ if __name__ == "__main__":
     #     image_name="1.jpg",
     #     resize_ratio=0.25,
     #     blurring_kernel_size=(7, 7),
-    #     closing_kernel_size=(5, 5),
-    #     closing_iterations=6,  # 4; 6
+    #     morph_type=cv2.MORPH_CLOSE,  # Image with white background: Close
+    #     morph_kernel_size=(5, 5),
+    #     morph_iterations=6,  # 4; 6
     #     dilate_kernel_size=(5, 5),
     #     dilate_iterations=10,
     #     foreground_thresh=0.26,  # 0.239; 0.26
     # )
 
-    watershed_segment(
-        image_name="3.jpg",
-        resize_ratio=1,
-        blurring_kernel_size=(5, 5),
-        closing_kernel_size=(3, 3),
-        closing_iterations=1,
-        dilate_kernel_size=(3, 3),
-        dilate_iterations=1,
-        foreground_thresh=0.37,
-    )
+    # watershed_segment(
+    #     image_name="3.jpg",
+    #     resize_ratio=1,
+    #     blurring_kernel_size=(5, 5),
+    #     morph_type=cv2.MORPH_OPEN,
+    #     morph_kernel_size=(3, 3),
+    #     morph_iterations=1,
+    #     dilate_kernel_size=(3, 3),
+    #     dilate_iterations=1,
+    #     foreground_thresh=0.37,
+    # )
 
     # If you want to check the influence of different parameters on the segmentation,
     # remember to comment all the plot_gray()/plot_rgb() and the final plt.show() in watershed_segment()
 
-    # create_trackbar_window()
-    # while True:
-    #     update_image(0)
-    #     cv2.waitKey(1)
+    create_trackbar_window()
+    while True:
+        update_image(0)
+        cv2.waitKey(1)
