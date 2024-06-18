@@ -63,13 +63,52 @@
 
 # Overview
 
-**Introduction**:
+**Introduction**: The project *Exploring Image Segmentation With OpenCV* is part of the Bilderkennung SS24 module of Prof. Dr. Peter Nauth at the Frankfurt University of Applied Sciences.
 
-**Objective**:
+**Objective**: This project aims to present possible ways of segmenting images with OpenCV and to show the influence of each image processing step on the final segmentation result.
 
-**Duration**:
+**Duration**: 06.05.2024 - 22.07.2024
 
-**Source Code**: 
+**Source Code**: [Link](https://github.com/krieger1512/Bild1_Segmentation)
+
+**Step-by-Step Architecture**
+
+```mermaid
+flowchart TB
+  import_resize[Import & Resize]
+
+  convert_grayscale[Convert to Grayscale]
+
+  gaussian_blur[Apply\nGaussian Blur]
+
+  otsu[Apply\nOtsu Binarization]
+
+  morph[Apply\nMorphological Transformation]
+
+  
+
+  draw[Draw Segments]
+
+  subgraph watershed_way[Watershed]
+    direction TB
+    find_bg[Determine\nSure Background]
+
+    find_fg[Determine\nSure Foreground]
+
+    find_unknown[Determine\nUnknown Region]
+
+    marker[Label With Markers]
+
+    watershed[Apply\nWatershed Algorithm]
+
+    find_bg & find_fg --> find_unknown --> marker --> watershed
+  end
+
+  
+  import_resize --> convert_grayscale --> gaussian_blur --> otsu --> morph
+  morph --> watershed_way --> draw
+  
+```
 
 ## Problem Definition
 
