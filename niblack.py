@@ -103,7 +103,7 @@ def niblack_segment(
 
 
 def update_image(x):
-    window_name = "Niblack Playground"
+    window_name = "Niblack Workstation"
 
     thresh, morphed, image_with_contours = niblack_segment(
         image_name=str(get_value("Image", window_name)) + ".jpg",
@@ -142,7 +142,7 @@ def get_type(trackbar_name, window_name):
 
 
 def create_trackbar_window(number_of_images, kernel_size_limit, iteration_limit):
-    window_name = "Niblack Playground"
+    window_name = "Niblack Workstation"
     cv2.namedWindow(window_name)
     cv2.resizeWindow(window_name, 1000, 309)
 

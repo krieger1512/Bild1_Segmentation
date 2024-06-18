@@ -90,7 +90,7 @@ def canny_segment(
 
 
 def update_image(x):
-    window_name = "Canny Playground"
+    window_name = "Canny Workstation"
 
     thresh, morphed, edged, image_with_contours = canny_segment(
         image_name=str(get_value("Image", window_name)) + ".jpg",
@@ -132,7 +132,7 @@ def get_type(trackbar_name, window_name):
 def create_trackbar_window(
     number_of_images, kernel_size_limit, iteration_limit, canny_thresh
 ):
-    window_name = "Canny Playground"
+    window_name = "Canny Workstation"
     cv2.namedWindow(window_name)
     cv2.resizeWindow(window_name, 1000, 309)
 

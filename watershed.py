@@ -127,7 +127,7 @@ def watershed_segment(
 
 
 def update_image(x):
-    window_name = "Watershed Playground"
+    window_name = "Watershed Workstation"
 
     thresh, morphed, sure_bg, sure_fg, image = watershed_segment(
         image_name=str(get_value("Image", window_name)) + ".jpg",
@@ -169,7 +169,7 @@ def get_type(trackbar_name, window_name):
 
 
 def create_trackbar_window(number_of_images, kernel_size_limit, iteration_limit):
-    window_name = "Watershed Playground"
+    window_name = "Watershed Workstation"
     cv2.namedWindow(window_name)
     cv2.resizeWindow(window_name, 1000, 340)
 
