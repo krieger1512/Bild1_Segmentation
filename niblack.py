@@ -4,6 +4,27 @@ import matplotlib.pyplot as plt
 import os
 
 
+def niblack_threshold(image, k, window_size):
+    # Convert the image to float32 for precision
+    image = image.astype(np.float32)
+
+    # Calculate the local mean (mean filter)
+    mean = cv2.boxFilter(image, cv2.CV_32F, window_size)
+
+    # Calculate the local variance and then standard deviation
+    sqr_mean = cv2.sqrBoxFilter(image, cv2.CV_32F, window_size)
+    variance = sqr_mean - mean**2
+    stddev = np.sqrt(variance)
+
+    # Calculate the Niblack threshold
+    threshold = mean + k * stddev
+
+    # Apply the threshold to binarize the image
+    binary_image = (image > threshold).astype(np.uint8) * 255
+
+    return binary_image
+
+
 def import_image(image_name):
     image_path = os.path.join(os.getcwd(), "input", image_name)
     image = cv2.imread(image_path)
@@ -15,19 +36,6 @@ def resize(image, ratio):
     height = int(image.shape[0] * ratio)
     resized_image = cv2.resize(image, (width, height), interpolation=cv2.INTER_AREA)
     return resized_image
-
-
-def find_sure_fg(foreground_thresh, image):
-    dist_transform = cv2.distanceTransform(image, cv2.DIST_L2, cv2.DIST_MASK_5)
-    # plot_gray(
-    #     cv2.normalize(dist_transform, None, 0, 1.0, cv2.NORM_MINMAX),
-    #     "Distance-transformed Normalized Image",
-    # )
-    _, sure_fg = cv2.threshold(
-        dist_transform, foreground_thresh * dist_transform.max(), 255, 0
-    )
-
-    return sure_fg
 
 
 def plot_gray(image, title):
@@ -44,16 +52,15 @@ def plot_rgb(image, title):
     plt.axis("off")
 
 
-def watershed_segment(
+def niblack_segment(
     image_name,
     resize_ratio,
     blurring_kernel_size,
+    niblack_k,
+    niblack_window_size,
     morph_type,
     morph_kernel_size,
     morph_iterations,
-    dilate_kernel_size,
-    dilate_iterations,
-    foreground_thresh,
 ):
 
     # Import image
@@ -71,12 +78,9 @@ def watershed_segment(
     blurred = cv2.GaussianBlur(gray, blurring_kernel_size, 0)
     # plot_gray(blurred, "Blurred Image")
 
-    # Apply Otsu binarization (global adaptive thresholding)
-    _, thresh = cv2.threshold(
-        blurred,
-        0,  # This value can be selected arbitrarily due to Otsu binarization
-        255,
-        cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU,
+    # Apply Niblack binarization
+    thresh = niblack_threshold(
+        image=blurred, k=niblack_k, window_size=niblack_window_size
     )
     # plot_gray(thresh, "Binarized Image")
 
@@ -89,68 +93,37 @@ def watershed_segment(
     )
     # plot_gray(morphed, "Morphed Image")
 
-    # Find sure background area
-    sure_bg = cv2.dilate(
-        morphed,
-        kernel=np.ones(dilate_kernel_size, np.uint8),
-        iterations=dilate_iterations,
-    )
-    # plot_gray(sure_bg, "Sure Background")
-
-    # Find sure foreground area
-    sure_fg = find_sure_fg(foreground_thresh, image=morphed)
-    # plot_gray(sure_fg, "Sure Foreground")
-
-    # Find unknown region
-    sure_fg = np.uint8(sure_fg)
-    unknown = cv2.subtract(sure_bg, sure_fg)
-    # plot_gray(unknown, "Unknown Area")
-
-    # Marker labelling
-    # Connected Components determines the connectivity of blob-like regions in a binary image.
-    _, markers = cv2.connectedComponents(sure_fg)
-
-    # Add one to all labels so that sure background is not 0, but 1
-    markers = markers + 1
-
-    # Mark the region of unknown with zero
-    markers[unknown == 255] = 0
-
-    # Apply watershed
-    markers = cv2.watershed(image, markers)
-    # plot_gray(markers, "Segments")
-    image[markers == -1] = [0, 255, 0]
-    # plot_rgb(image, "Segmented Image")
+    # Detect all contours in Canny-edged image
+    contours, _ = cv2.findContours(morphed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    image_with_contours = cv2.drawContours(image.copy(), contours, -1, (0, 255, 0), 1)
+    # plot_rgb(image_with_contours, "Segmented Image")
 
     # plt.show()
-    return thresh, morphed, sure_bg, sure_fg, image
+    return thresh, morphed, image_with_contours
 
 
 def update_image(x):
-    window_name = "Watershed Playground"
+    window_name = "Niblack Playground"
 
-    thresh, morphed, sure_bg, sure_fg, image = watershed_segment(
+    thresh, morphed, image_with_contours = niblack_segment(
         image_name=str(get_value("Image", window_name)) + ".jpg",
         resize_ratio=get_value("Resize(%)", window_name),
         blurring_kernel_size=get_kernel_size("Blur KS", window_name),
+        niblack_k=get_value("NB k (%)", window_name),
+        niblack_window_size=get_kernel_size("NB KS", window_name),
         morph_type=get_type("Open/Close", window_name),
         morph_kernel_size=get_kernel_size("Morph KS", window_name),
         morph_iterations=get_value("Morph Ite", window_name),
-        dilate_kernel_size=get_kernel_size("Dilate KS", window_name),
-        dilate_iterations=get_value("Dilate Ite", window_name),
-        foreground_thresh=get_value("FG-Thre(%)", window_name),
     )
 
-    cv2.imshow("Binarization", thresh)
+    cv2.imshow("Niblack Binarization", thresh)
     cv2.imshow("Morphological Transformations", morphed)
-    # cv2.imshow("Sure Background Area", sure_bg)
-    # cv2.imshow("Sure Foreground Area", sure_fg)
-    cv2.imshow("Image Segmentation with Watershed", image)
+    cv2.imshow("Image Segmentation", image_with_contours)
 
 
 def get_value(trackbar_name, window_name):
     value = cv2.getTrackbarPos(trackbar_name, window_name)
-    if trackbar_name in ["Resize(%)", "FG-Thre(%)"]:
+    if trackbar_name in ["Resize(%)", "NB k (%)"]:
         value = value / 100
     return value
 
@@ -169,9 +142,9 @@ def get_type(trackbar_name, window_name):
 
 
 def create_trackbar_window(number_of_images, kernel_size_limit, iteration_limit):
-    window_name = "Watershed Playground"
+    window_name = "Niblack Playground"
     cv2.namedWindow(window_name)
-    cv2.resizeWindow(window_name, 1000, 340)
+    cv2.resizeWindow(window_name, 1000, 309)
 
     cv2.createTrackbar("Image", window_name, 1, number_of_images, update_image)
     cv2.setTrackbarMin("Image", window_name, 1)
@@ -182,6 +155,12 @@ def create_trackbar_window(number_of_images, kernel_size_limit, iteration_limit)
     cv2.createTrackbar("Blur KS", window_name, 3, kernel_size_limit, update_image)
     cv2.setTrackbarMin("Blur KS", window_name, 3)
 
+    cv2.createTrackbar("NB k (%)", window_name, 20, 100, update_image)
+    cv2.setTrackbarMin("NB k (%)", window_name, -100)
+
+    cv2.createTrackbar("NB KS", window_name, 3, kernel_size_limit, update_image)
+    cv2.setTrackbarMin("NB KS", window_name, 3)
+
     cv2.createTrackbar("Open/Close", window_name, 0, 1, update_image)
 
     cv2.createTrackbar("Morph KS", window_name, 3, kernel_size_limit, update_image)
@@ -190,52 +169,30 @@ def create_trackbar_window(number_of_images, kernel_size_limit, iteration_limit)
     cv2.createTrackbar("Morph Ite", window_name, 1, iteration_limit, update_image)
     cv2.setTrackbarMin("Morph Ite", window_name, 1)
 
-    cv2.createTrackbar("Dilate KS", window_name, 3, kernel_size_limit, update_image)
-    cv2.setTrackbarMin("Dilate KS", window_name, 3)
-
-    cv2.createTrackbar("Dilate Ite", window_name, 1, iteration_limit, update_image)
-    cv2.setTrackbarMin("Dilate Ite", window_name, 1)
-
-    cv2.createTrackbar("FG-Thre(%)", window_name, 20, 100, update_image)
-    cv2.setTrackbarMin("FG-Thre(%)", window_name, 1)
-
 
 if __name__ == "__main__":
 
     # If you want to check the interim results during segmentation,
-    # uncomment the plot_gray()/plot_rgb() and the final plt.show() in watershed_segment()
+    # uncomment the plot_gray()/plot_rgb() and the final plt.show() in niblack_segment()
 
-    # watershed_segment(
-    #     image_name="1.jpg",
-    #     resize_ratio=0.25,
-    #     blurring_kernel_size=(7, 7),
-    #     morph_type=cv2.MORPH_CLOSE,  # Image with white background: Close
-    #     morph_kernel_size=(5, 5),
-    #     morph_iterations=6,  # 4; 6
-    #     dilate_kernel_size=(5, 5),
-    #     dilate_iterations=10,
-    #     foreground_thresh=0.26,  # 0.239; 0.26
-    # )
-
-    # watershed_segment(
-    #     image_name="3.jpg",
+    # niblack_segment(
+    #     image_name="2.jpg",
     #     resize_ratio=1,
     #     blurring_kernel_size=(5, 5),
-    #     morph_type=cv2.MORPH_OPEN, # Image with black background: Open
+    #     niblack_k=-0.2,
+    #     niblack_window_size=(3, 3),
+    #     morph_type=cv2.MORPH_OPEN,
     #     morph_kernel_size=(3, 3),
-    #     morph_iterations=3,
-    #     dilate_kernel_size=(3, 3),
-    #     dilate_iterations=1,
-    #     foreground_thresh=0.78,
+    #     morph_iterations=1,
     # )
 
     # If you want to check the influence of different parameters on the segmentation,
-    # comment out all the plot_gray()/plot_rgb() and the final plt.show() in watershed_segment()
+    # comment out all the plot_gray()/plot_rgb() and the final plt.show() in niblack_segment()
 
     input_images = os.listdir(os.path.join(os.getcwd(), "input"))
     jpg_files = [file for file in input_images if file.lower().endswith((".jpg"))]
     create_trackbar_window(
-        number_of_images=len(jpg_files), kernel_size_limit=13, iteration_limit=40
+        number_of_images=len(jpg_files), kernel_size_limit=17, iteration_limit=40
     )
     while True:
         update_image(0)

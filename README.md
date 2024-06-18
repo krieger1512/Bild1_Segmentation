@@ -5,14 +5,6 @@
 Given an image with objects of recognizable shapes, divide the image into segments so each segment represents one shape.
 
 This work aims to solve simple image segmentation task with traditional computer vision algorithms instead of machine learning models.
-
-Next steps:
-- Watershed with color segmentation and segmentated image
-- Canny
-- Color segmentation
-- Adaptive Thresholding: Improve edge detection by using adaptive thresholding techniques before applying Canny.
-- K-Means clustering
-- Performance comparison
   
 Area for Nilsblack "window": twice the size of object
 
@@ -25,6 +17,10 @@ We will break down this problems into smaller tasks:
 6. Find Contours: Use the findContours function to detect the contours in the thresholded image.
 7. Draw Contours: Draw the detected contours on the original image or on a blank image to visualize the segmentation.
 8. Color the segments
+
+TODO:
+1. Suzuki algorithm in OpenCV
+2. Write Docu
 
 ## Setup/Preconfiguration
 
