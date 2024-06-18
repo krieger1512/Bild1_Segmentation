@@ -1,4 +1,75 @@
-# Bild1_Segmentation
+<br>
+<br>
+
+<div style="text-align: center;">
+  <img src="https://upload.wikimedia.org/wikipedia/de/9/9f/Frankfurt_University_of_Applied_Sciences_logo.svg" width="300" alt="Logo">
+</div>
+
+<br>
+<br>
+<br>
+
+<div style="text-align: center;">
+  <font size="4"><strong>Project Report</strong></font>
+</div>
+
+<br>
+<br>
+<br>
+
+<div style="text-align: center;">
+  <font size="6.9">Exploring Image Segmentation</font>
+</div>
+<br>
+<div style="text-align: center;">
+  <font size="6.9">With OpenCV</font>
+</div>
+
+<br>
+<br>
+<br>
+
+<div style="text-align: center;">
+  <font size="3"><em>by</em></font>
+</div>
+<br>
+<div style="text-align: center;">
+  <font size="4">Minh Kien Nguyen</font>
+  <br>
+</div>
+
+<br>
+<br>
+
+<div style="text-align: center;">
+  <font size="3"><strong>Supervisor</strong></font>
+  <br>
+  <font size="4">Prof. Dr. Peter Nauth</font>
+</div>
+
+<br>
+<br>
+
+<div style="text-align: center;">
+  <font size="3"><strong>Submission Date</strong></font>
+  <br>
+  <font size="4">July 22nd, 2024</font>
+</div>
+
+
+
+<div style="page-break-after: always"></div>
+
+
+# Overview
+
+**Introduction**:
+
+**Objective**:
+
+**Duration**:
+
+**Source Code**: 
 
 ## Problem Definition
 
@@ -22,7 +93,7 @@ TODO:
 1. Suzuki algorithm in OpenCV
 2. Write Docu
 
-## Setup/Preconfiguration
+# Setup/Preconfiguration
 
 Only needs to be done once
 
@@ -49,3 +120,11 @@ Follow these steps in your terminal:
     ```
     pip install -r requirements.txt    
     ```
+
+# Niblack
+
+# Canny
+
+# Watershed
+
+# References
