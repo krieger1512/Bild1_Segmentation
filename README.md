@@ -189,7 +189,11 @@ flowchart LR
 
 **Step-by-Step Explanation**
 
-- *Import & Resize*: 
+- *Import & Resize*:
+- Convert to Grayscale
+- Apply Gaussian Blur
+- Apply Otsu Binarization
+- Apply Morphological Transformation
 
 **Workstation**
 

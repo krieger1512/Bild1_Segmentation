@@ -122,14 +122,25 @@ def watershed_segment(
     image[markers == -1] = [0, 255, 0]
     # plot_rgb(image, "Segmented Image")
 
-    # plt.show()
-    return thresh, morphed, sure_bg, sure_fg, image
+    markers_as_array = np.array(markers, dtype=np.int32)
+    markers_normalized = cv2.normalize(
+        markers_as_array,
+        None,
+        alpha=0,
+        beta=255,
+        norm_type=cv2.NORM_MINMAX,
+        dtype=cv2.CV_8U,
+    )
+    markers_colormap = cv2.applyColorMap(markers_normalized, cv2.COLORMAP_JET)
+
+    plt.show()
+    return thresh, morphed, sure_bg, sure_fg, markers_colormap, image
 
 
 def update_image(x):
     window_name = "Watershed Workstation"
 
-    thresh, morphed, sure_bg, sure_fg, image = watershed_segment(
+    thresh, morphed, sure_bg, sure_fg, markers, image = watershed_segment(
         image_name=str(get_value("Image", window_name)) + ".jpg",
         resize_ratio=get_value("Resize(%)", window_name),
         blurring_kernel_size=get_kernel_size("Blur KS", window_name),
@@ -141,10 +152,11 @@ def update_image(x):
         foreground_thresh=get_value("FG-Thre(%)", window_name),
     )
 
-    cv2.imshow("Binarization", thresh)
-    cv2.imshow("Morphological Transformations", morphed)
+    # cv2.imshow("Binarization", thresh)
+    # cv2.imshow("Morphological Transformations", morphed)
     # cv2.imshow("Sure Background Area", sure_bg)
     # cv2.imshow("Sure Foreground Area", sure_fg)
+    cv2.imshow("Markers", markers)
     cv2.imshow("Image Segmentation with Watershed", image)
 
 
