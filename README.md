@@ -83,10 +83,6 @@ This project aims to
 - present possible ways of segmenting images with traditional computer vision algorithms in OpenCV instead of machine learning models.
 - show the influence of each image processing step on the final segmentation result
 
-**Duration**
-
-06.05.2024 - 22.07.2024
-
 **Source Code**
 
 [Link](https://github.com/krieger1512/Bild1_Segmentation)
@@ -105,8 +101,6 @@ The three parts differ in the algorithms used for binarization and labeling segm
 | Watershed | Otsu [1]     | Watershed [2]                         |
 | Suzuki    | Otsu [1]     | Suzuki [3]                            |
 | Niblack   | Niblack [4]  | Suzuki [3]                            |
-
-
 
 <div style="page-break-after: always"></div>
 
@@ -236,12 +230,12 @@ flowchart LR
 
   ![](doc_img/watershed_final.png)
 
-
 **Controller**
+
+This project provides a controller for checking the influences of different parameters (that control the above steps) on the interim/final segmentation results. Below is the list of available parameters and their meanings:
 
 ![](doc_img/watershed_controller.png)
 
-This project provides a controller for checking the influences of different parameters (that control the above steps) on the interim/final segmentation results. Below is the list of available parameters and their meanings:
 - ``Image``: ID of the image that needs to be segmented. These images can be found inside the ``input`` folder. 
 - ``Resize(%)``: Downscale ratio, ranging from 1% to 100%
 - ``Blur KS``: Kernel size of Gaussian blur. Must be an odd number. By default the even-number kernel size will be incremented to make it odd-number.
@@ -251,7 +245,6 @@ This project provides a controller for checking the influences of different para
 - ``Dilate KS``: Kernel size of the dilation used for finding sure background pixels. Must be an odd number. By default the even kernel size will be incremented to make it odd.
 - ``Dilate Ite``: Number of iterations (times) the dilation used for finding sure background pixels is applied.
 - ``FG-Thre(%)``: Threshold level for determining sure foreground pixels, ranging from 1% to 100%.
-
 
 <div style="page-break-after: always"></div>
 
@@ -314,7 +307,6 @@ flowchart LR
 
   ![](doc_img/suzuki_final.png)
 
-
 **Controller**
 
 ![](doc_img/suzuki_controller.png)
@@ -327,7 +319,6 @@ This project provides a controller for checking the influences of different para
 - ``Morph KS``: Kernel size of the selected morphological transformation. Must be an odd number. By default the even kernel size will be incremented to make it odd.
 - ``Morph Ite``: Number of iterations (times) the selected morphological transformation is applied.
 - ``Retr Mode``: Retrieval mode for retrieving contours: `0` means ``RETR_EXTERNAL`` (get the outer-most contours and ignore the inner contours), while `1` means ``RETR_TREE`` (get all contours and create a full family hierarchy list).
-
 
 <div style="page-break-after: always"></div>
 
@@ -374,7 +365,7 @@ flowchart LR
   ![](doc_img/nb_blur.png)
 - ``Apply Niblack Binarization``:
   
-  Use Niblack's method to divide the blurred image in foreground pixels (i.e., pixels representing objects) which are set to 255 and background pixels which are set to 0. Niblack's method uses local adaptive thresholding.
+  Use Niblack's method to detect edges. Niblack's method uses local adaptive thresholding.
 
   ![](doc_img/nb_binary.png)
 - ``Apply Morphological Transformation``
@@ -390,13 +381,12 @@ flowchart LR
 
   ![](doc_img/nb_final.png)
 
-
-
 **Controller**
+
+This project provides a controller for checking the influences of different parameters (that control the above steps) on the interim/final segmentation results. Below is the list of available parameters and their meanings:
 
 ![](doc_img/nb_controller.png)
 
-This project provides a controller for checking the influences of different parameters (that control the above steps) on the interim/final segmentation results. Below is the list of available parameters and their meanings:
 - ``Image``: ID of the image that needs to be segmented. These images can be found inside the ``input`` folder. 
 - ``Resize(%)``: Downscale ratio, ranging from 1% to 100%
 - ``Blur KS``: Kernel size of Gaussian blur. Must be an odd number. By default the even-number kernel size will be incremented to make it odd-number.
