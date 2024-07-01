@@ -61,6 +61,7 @@ def niblack_segment(
     morph_type,
     morph_kernel_size,
     morph_iterations,
+    retrieval_mode,
 ):
 
     # Import image
@@ -94,11 +95,12 @@ def niblack_segment(
     # plot_gray(morphed, "Morphed Image")
 
     # Detect all contours in Canny-edged image
-    contours, _ = cv2.findContours(morphed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(morphed, retrieval_mode, cv2.CHAIN_APPROX_SIMPLE)
     image_with_contours = cv2.drawContours(image.copy(), contours, -1, (0, 255, 0), 1)
     # plot_rgb(image_with_contours, "Segmented Image")
 
     colored_segments = color_segments(image, contours)
+    # plot_rgb(colored_segments, "Segments")
 
     # plt.show()
     return thresh, morphed, colored_segments, image_with_contours
@@ -128,10 +130,11 @@ def update_image(x):
         morph_type=get_type("Open/Close", window_name),
         morph_kernel_size=get_kernel_size("Morph KS", window_name),
         morph_iterations=get_value("Morph Ite", window_name),
+        retrieval_mode=get_type("Retr Mode", window_name),
     )
 
-    # cv2.imshow("Niblack Binarization", thresh)
-    # cv2.imshow("Morphological Transformations", morphed)
+    cv2.imshow("Niblack Binarization", thresh)
+    cv2.imshow("Morphological Transformations", morphed)
     cv2.imshow("Segments", colored_segments)
     cv2.imshow("Image Segmentation", image_with_contours)
 
@@ -153,13 +156,16 @@ def get_kernel_size(trackbar_name, window_name):
 
 def get_type(trackbar_name, window_name):
     type = cv2.getTrackbarPos(trackbar_name, window_name)
-    return cv2.MORPH_OPEN if type == 0 else cv2.MORPH_CLOSE
+    if trackbar_name == "Open/Close":
+        return cv2.MORPH_OPEN if type == 0 else cv2.MORPH_CLOSE
+    elif trackbar_name == "Retr Mode":
+        return cv2.RETR_EXTERNAL if type == 0 else cv2.RETR_TREE
 
 
 def create_trackbar_window(number_of_images, kernel_size_limit, iteration_limit):
     window_name = "Niblack Controller"
     cv2.namedWindow(window_name)
-    cv2.resizeWindow(window_name, 1000, 309)
+    cv2.resizeWindow(window_name, 1000, 340)
 
     cv2.createTrackbar("Image", window_name, 1, number_of_images, update_image)
     cv2.setTrackbarMin("Image", window_name, 1)
@@ -184,6 +190,8 @@ def create_trackbar_window(number_of_images, kernel_size_limit, iteration_limit)
     cv2.createTrackbar("Morph Ite", window_name, 1, iteration_limit, update_image)
     cv2.setTrackbarMin("Morph Ite", window_name, 1)
 
+    cv2.createTrackbar("Retr Mode", window_name, 0, 1, update_image)
+
 
 if __name__ == "__main__":
 
@@ -199,6 +207,7 @@ if __name__ == "__main__":
     #     morph_type=cv2.MORPH_OPEN,
     #     morph_kernel_size=(3, 3),
     #     morph_iterations=1,
+    #     retrieval_mode=cv2.RETR_TREE,
     # )
 
     # If you want to check the influence of different parameters on the segmentation,

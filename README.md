@@ -333,7 +333,7 @@ This project provides a controller for checking the influences of different para
 
 # Niblack
 
-**Description**
+This part uses [Niblack's method](https://craftofcoding.wordpress.com/2021/09/30/thresholding-algorithms-niblack-local/) for binarization and [Suzuki algorithm](https://theailearner.com/2019/11/19/suzukis-contour-tracing-algorithm-opencv-python/) for finding contours.
 
 **Step-by-Step Architecture**
 
@@ -357,7 +357,55 @@ flowchart LR
 
 **Step-by-Step Explanation**
 
-**Workstation**
+- ``Import & Resize``: 
+  
+  Load the input image that needs to be segmented and resize it if necessary.
+
+  ![](input/2.jpg)
+- ``Convert to Grayscale``:
+  
+  Convert the imported image to grayscale. Each pixel in the image now ranges from 0 to 255.
+
+  ![](doc_img/nb_grayscale.png)
+- ``Apply Gaussian Blur``:
+  
+  Blur the grayscale image with Gaussian blur for better binarization result in the subsequent step.
+
+  ![](doc_img/nb_blur.png)
+- ``Apply Niblack Binarization``:
+  
+  Use Niblack's method to divide the blurred image in foreground pixels (i.e., pixels representing objects) which are set to 255 and background pixels which are set to 0. Niblack's method uses local adaptive thresholding.
+
+  ![](doc_img/nb_binary.png)
+- ``Apply Morphological Transformation``
+  
+  Apply morphological transformation to further reduce "noise" in the binary image.
+
+  ![](doc_img/nb_morph.png)
+- ``Apply Suzuki Algorithm``
+
+  Apply the Suzuki algorithm to find contours in the morphed image. In this example we are interested in all contours. Thus in the source code, the ``retrieval_mode`` is specified as ``RETR_TREE``, meaning we retrieve all available contours.
+
+  ![](doc_img/nb_segments.png)
+
+  ![](doc_img/nb_final.png)
+
+
+
+**Controller**
+
+![](doc_img/nb_controller.png)
+
+This project provides a controller for checking the influences of different parameters (that control the above steps) on the interim/final segmentation results. Below is the list of available parameters and their meanings:
+- ``Image``: ID of the image that needs to be segmented. These images can be found inside the ``input`` folder. 
+- ``Resize(%)``: Downscale ratio, ranging from 1% to 100%
+- ``Blur KS``: Kernel size of Gaussian blur. Must be an odd number. By default the even-number kernel size will be incremented to make it odd-number.
+- ``NB k (%)``: Constant k used in Niblack binarization, ranging from -100% to 100%. 
+- ``NB KS``: Kernel size used in Niblack binarization. Must be an odd number. By default the even kernel size will be incremented to make it odd.
+- ``Open/Close``: Morphological transformation to be applied: `0` means opening, while `1` means closing.
+- ``Morph KS``: Kernel size of the selected morphological transformation. Must be an odd number. By default the even kernel size will be incremented to make it odd.
+- ``Morph Ite``: Number of iterations (times) the selected morphological transformation is applied.
+- ``Retr Mode``: Retrieval mode for retrieving contours: `0` means ``RETR_EXTERNAL`` (get the outer-most contours and ignore the inner contours), while `1` means ``RETR_TREE`` (get all contours and create a full family hierarchy list).
 
 <div style="page-break-after: always"></div>
 
