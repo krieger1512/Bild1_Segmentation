@@ -143,7 +143,7 @@ def color_markers(markers):
 
 
 def update_image(x):
-    window_name = "Watershed Workstation"
+    window_name = "Watershed Controller"
 
     thresh, morphed, sure_bg, sure_fg, markers, image = watershed_segment(
         image_name=str(get_value("Image", window_name)) + ".jpg",
@@ -186,7 +186,7 @@ def get_type(trackbar_name, window_name):
 
 
 def create_trackbar_window(number_of_images, kernel_size_limit, iteration_limit):
-    window_name = "Watershed Workstation"
+    window_name = "Watershed Controller"
     cv2.namedWindow(window_name)
     cv2.resizeWindow(window_name, 1000, 340)
 

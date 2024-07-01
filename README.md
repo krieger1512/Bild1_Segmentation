@@ -98,13 +98,15 @@ The project is divided into three parts:
 2. Image segmentation with Canny edge detection (``canny.py``) &rarr; See section [Canny](#canny)
 3. Image segmentation with Niblack edge detection (``niblack.py``) &rarr; See section [Niblack](#niblack)
 
-The three parts differ in the algorithms used for binarization and labeling. Details about each algorithm are provided in their respective sections.
+The three parts differ in the algorithms used for binarization and labeling. The project focuses on using the OpenCV implementation of these algorithms to segment images, thus details about them will only be referenced.
 
-| Part      | Binarization | Labelling |
-| --------- | ------------ | --------- |
-| Watershed | Otsu         | Watershed |
-| Canny     | Otsu + Canny | Suzuki    |
-| Niblack   | Niblack      | Suzuki    |
+| Part      | Binarization         | Labelling     |
+| --------- | -------------------- | ------------- |
+| Watershed | Otsu [1]             | Watershed [4] |
+| Canny     | Otsu [1] + Canny [2] | Suzuki [5]    |
+| Niblack   | Niblack [3]          | Suzuki [5]    |
+
+
 
 <div style="page-break-after: always"></div>
 
@@ -151,11 +153,7 @@ Follow these steps in your terminal (e.g., Command Prompt on Windows):
 
 # Watershed
 
-**Description**
-
-Any grayscale image can be viewed as a topographic surface where high intensity denotes peaks and hills while low intensity denotes valleys. You start filling every isolated valleys (local minima) with different colored water (labels). As the water rises, depending on the peaks (gradients) nearby, water from different valleys, obviously with different colors will start to merge. To avoid that, you build barriers in the locations where water merges. You continue the work of filling water and building barriers until all the peaks are under water. Then the barriers you created gives you the segmentation result. This is the "philosophy" behind the watershed. You can visit the CMM webpage on watershed to understand it with the help of some animations.
-
-But this approach gives you oversegmented result due to noise or any other irregularities in the image. So OpenCV implemented a marker-based watershed algorithm where you specify which are all valley points are to be merged and which are not. It is an interactive image segmentation. What we do is to give different labels for our object we know. Label the region which we are sure of being the foreground or object with one color (or intensity), label the region which we are sure of being background or non-object with another color and finally the region which we are not sure of anything, label it with 0. That is our marker. Then apply watershed algorithm. Then our marker will be updated with the labels we gave, and the boundaries of objects will have a value of -1.
+This part uses [Otsu's method](https://learnopencv.com/otsu-thresholding-with-opencv/) for binarization and [Watershed algorithm](https://en.wikipedia.org/wiki/Watershed_(image_processing)) for labelling.
 
 **Step-by-Step Architecture**
 
@@ -177,27 +175,80 @@ flowchart LR
   
   find_unknown[Determine\nUnknown Region]
   
-  marker[Apply\nMarker Labelling]
+  marker[Apply\nConnected Component Labelling]
   
   watershed[Apply\nWatershed Algorithm]
   
-  draw[Draw\nSegments]
-  
-  import_resize --> convert_grayscale --> gaussian_blur --> otsu --> morph --> find_bg & find_fg --> find_unknown --> marker --> watershed --> draw
+  import_resize --> convert_grayscale --> gaussian_blur --> otsu --> morph --> find_bg & find_fg --> find_unknown --> marker --> watershed
   
 ```
 
 **Step-by-Step Explanation**
 
-- *Import & Resize*:
-- Convert to Grayscale
-- Apply Gaussian Blur
-- Apply Otsu Binarization
-- Apply Morphological Transformation
+- ``Import & Resize``: 
+  
+  Load the input image that needs to be segmented and resize it if necessary.
+- ``Convert to Grayscale``:
+  
+  Convert the imported image to grayscale. Each pixel in the image now ranges from 0 to 255.
 
-**Workstation**
+  ![](doc_img/watershed_grayscale.png)
+- ``Apply Gaussian Blur``:
+  
+  Blur the grayscale image with Gaussian blur for better binarization result in the subsequent step.
+
+  ![](doc_img/watershed_blur.png)
+- ``Apply Otsu Binarization``:
+  
+  Use Otsu's method to divide the blurred image in foreground pixels (i.e., pixels representing objects) which are set to 255 and background pixels which are set to 0. Otsu's method determines (global) threshold automatically (i.e., adaptive thresholding).
+
+  ![](doc_img/watershed_binary.png)
+- ``Apply Morphological Transformation``
+  
+  Apply morphological transformation to further reduce "noise" in the binary image. The goal is to eliminate groups of white or black points that are big enough to be a segment, but not big enough to represent the whole object that we want.
+
+  ![](doc_img/watershed_morph.png)
+- ``Determine Sure Background``
+
+  Determine regions that are definitely background. This is done by dilating the foreground objects (i.e., increasing their sizes and boundaries to the background) in the morphed image, so that the remaining background regions are certainly background. 
+
+  ![](doc_img/watershed_bg.png)
+- ``Determine Sure Foreground``
+
+  Determine regions that are definitely foreground. For that purpose, first apply distance transform to the morphed image. The result is an image with brighter pixels indicating higher (Euclidean) distances to the nearest background pixel. Based on this result, select a threshold level for determining sure foreground regions (e.g., 70% of the maximum distance found by the distance transform). Pixels with distance transform values higher than the selected threshold level are set as sure foreground.
+
+  ![](doc_img/watershed_fg.png)
+- ``Determine Unknown Region``
+
+  Determine regions that are neither sure background nor sure foreground. This is done by substracting the sure foreground from the sure background. The unknown region is key for the Watershed algorithm because it signifies the transition region between distinct objects or between an object and the background.
+
+  ![](doc_img/watershed_unknown.png)
+- ``Apply Connected Component Labelling``
+
+  Label unknown pixels, sure background pixels, and groups of sure foreground pixels that belong together with numbers (i.e., markers). Unknown pixels are labeled as 0, sure background pixels are labeled as 1, and sure foreground pixels are labeled starting from 2.
+- ``Apply Watershed Algorithm``
+
+  Apply the Watershed algorithm to the above markers. Water will start rising from "valleys" - sure foreground pixels of the same marker. Each valley has a different marker. When the water rises, each pixel that the water touches (except sure background ones) gets the same marker as the valley the water originated from. Sure background pixels are considered peaks and will not be marked. The unknown pixels where the water reaches the peaks or water of different valleys meet are considered (object) boundaries and marked with -1. The algorithm stops when there is no unknown pixel left.
+
+  ![](doc_img/watershed_segments.png)
+
+  ![](doc_img/watershed_final.png)
 
 
+**Controller**
+
+![](doc_img/watershed_controller.png)
+
+This project provides a controller for checking the influences of different parameters (that control the above steps) on the interim/final segmentation results. Below is the list of available parameters and their meanings:
+- ``Image``: ID of the image that needs to be segmented. These images can be found inside the ``input`` folder. 
+- ``Resize(%)``: Downscale ratio, ranging from 1% to 100%
+- ``Blur KS``: Kernel size of Gaussian blur. Must be an odd number. By default the even-number kernel size will be incremented to make it odd-number.
+- ``Open/Close``: Morphological transformation to be applied: `0` means opening, where `1` means closing.
+- ``Morph KS``: Kernel size of the selected morphological transformation. Must be an odd number. By default the even kernel size will be incremented to make it odd.
+- ``Morph Ite``: Number of iterations (times) the selected morphological transformation is applied.
+- ``Dilate KS``: Kernel size of the dilation used for finding sure background pixels. Must be an odd number. By default the even kernel size will be incremented to make it odd.
+- ``Dilate Ite``: Number of iterations (times) the dilation used for finding sure background pixels is applied.
+- ``FG-Thre(%)``: Threshold level for determining sure foreground pixels, ranging from 1% to 100%.
 
 
 <div style="page-break-after: always"></div>
@@ -223,11 +274,8 @@ flowchart LR
   canny[Apply\nCanny Edge Detection]
 
   suzuki[Apply\nSuzuki Algorithm]
-
-  draw[Draw\nSegments]
-
   
-  import_resize --> convert_grayscale --> gaussian_blur --> otsu --> morph --> canny --> suzuki --> draw
+  import_resize --> convert_grayscale --> gaussian_blur --> otsu --> morph --> canny --> suzuki
   
 ```
 
@@ -257,10 +305,7 @@ flowchart LR
 
   suzuki[Apply\nSuzuki Algorithm]
 
-  draw[Draw\nSegments]
-
-  
-  import_resize --> convert_grayscale --> gaussian_blur --> niblack --> morph --> suzuki --> draw
+  import_resize --> convert_grayscale --> gaussian_blur --> niblack --> morph --> suzuki 
   
 ```
 
@@ -271,3 +316,14 @@ flowchart LR
 <div style="page-break-after: always"></div>
 
 # References
+
+[1] N. Otsu, “A Threshold Selection Method from Gray-Level Histograms,” IEEE Transactions on Systems, Man, and Cybernetics, vol. 9, no. 1, pp. 62–66, Jan. 1979, doi: https://doi.org/10.1109/tsmc.1979.4310076.
+
+[2] J. Canny, “A Computational Approach to Edge Detection,” IEEE Transactions on Pattern Analysis and Machine Intelligence, vol. PAMI-8, no. 6, pp. 679–698, Nov. 1986, doi: https://doi.org/10.1109/tpami.1986.4767851.
+
+[3] W. Niblack, An Introduction to Digital Image Processing. Prentice Hall, 1986.
+
+[4] S. Beucher and C. Lantuéjoul, "Use of Watersheds in Contour Detection," in Proc. International Workshop on Image Processing: Real-time Edge and Motion Detection/Estimation, Rennes, France, 1979.
+
+[5] S. Suzuki and K. be, “Topological structural analysis of digitized binary images by border following,” Computer Vision, Graphics, and Image Processing, vol. 30, no. 1, pp. 32–46, Apr. 1985, doi: https://doi.org/10.1016/0734-189x(85)90016-7.
+‌

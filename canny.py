@@ -104,7 +104,7 @@ def color_segments(image, contours):
 
 
 def update_image(x):
-    window_name = "Canny Workstation"
+    window_name = "Canny Controller"
 
     thresh, morphed, edged, colored_segments, image_with_contours = canny_segment(
         image_name=str(get_value("Image", window_name)) + ".jpg",
@@ -147,7 +147,7 @@ def get_type(trackbar_name, window_name):
 def create_trackbar_window(
     number_of_images, kernel_size_limit, iteration_limit, canny_thresh
 ):
-    window_name = "Canny Workstation"
+    window_name = "Canny Controller"
     cv2.namedWindow(window_name)
     cv2.resizeWindow(window_name, 1000, 309)
 

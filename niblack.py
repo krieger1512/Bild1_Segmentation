@@ -117,7 +117,7 @@ def color_segments(image, contours):
 
 
 def update_image(x):
-    window_name = "Niblack Workstation"
+    window_name = "Niblack Controller"
 
     thresh, morphed, colored_segments, image_with_contours = niblack_segment(
         image_name=str(get_value("Image", window_name)) + ".jpg",
@@ -157,7 +157,7 @@ def get_type(trackbar_name, window_name):
 
 
 def create_trackbar_window(number_of_images, kernel_size_limit, iteration_limit):
-    window_name = "Niblack Workstation"
+    window_name = "Niblack Controller"
     cv2.namedWindow(window_name)
     cv2.resizeWindow(window_name, 1000, 309)
 
