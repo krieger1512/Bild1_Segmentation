@@ -122,6 +122,13 @@ def watershed_segment(
     image[markers == -1] = [0, 255, 0]
     # plot_rgb(image, "Segmented Image")
 
+    markers_colormap = color_markers(markers)
+
+    # plt.show()
+    return thresh, morphed, sure_bg, sure_fg, markers_colormap, image
+
+
+def color_markers(markers):
     markers_as_array = np.array(markers, dtype=np.int32)
     markers_normalized = cv2.normalize(
         markers_as_array,
@@ -132,9 +139,7 @@ def watershed_segment(
         dtype=cv2.CV_8U,
     )
     markers_colormap = cv2.applyColorMap(markers_normalized, cv2.COLORMAP_JET)
-
-    plt.show()
-    return thresh, morphed, sure_bg, sure_fg, markers_colormap, image
+    return markers_colormap
 
 
 def update_image(x):
@@ -156,7 +161,7 @@ def update_image(x):
     # cv2.imshow("Morphological Transformations", morphed)
     # cv2.imshow("Sure Background Area", sure_bg)
     # cv2.imshow("Sure Foreground Area", sure_fg)
-    cv2.imshow("Markers", markers)
+    cv2.imshow("Segments", markers)
     cv2.imshow("Image Segmentation with Watershed", image)
 
 

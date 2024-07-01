@@ -85,14 +85,28 @@ def canny_segment(
     image_with_contours = cv2.drawContours(image.copy(), contours, -1, (0, 255, 0), 1)
     # plot_rgb(image_with_contours, "Segmented Image")
 
+    colored_segments = color_segments(image, contours)
+
     # plt.show()
-    return thresh, morphed, edged, image_with_contours
+    return thresh, morphed, edged, colored_segments, image_with_contours
+
+
+def color_segments(image, contours):
+    colored_segments = np.zeros((image.shape[0], image.shape[1], 3), dtype=np.uint8)
+    colors = plt.get_cmap("hsv", len(contours))
+
+    for i, contour in enumerate(contours):
+        color = tuple(
+            int(c * 255) for c in colors(i)[:3]
+        )  # Convert colormap to BGR tuple
+        cv2.drawContours(colored_segments, [contour], -1, color, cv2.FILLED)
+    return colored_segments
 
 
 def update_image(x):
     window_name = "Canny Workstation"
 
-    thresh, morphed, edged, image_with_contours = canny_segment(
+    thresh, morphed, edged, colored_segments, image_with_contours = canny_segment(
         image_name=str(get_value("Image", window_name)) + ".jpg",
         resize_ratio=get_value("Resize(%)", window_name),
         blurring_kernel_size=get_kernel_size("Blur KS", window_name),
@@ -103,9 +117,10 @@ def update_image(x):
         morph_iterations=get_value("Morph Ite", window_name),
     )
 
-    cv2.imshow("Otsu Binarization", thresh)
-    cv2.imshow("Morphological Transformations", morphed)
-    cv2.imshow("Canny Edge Detection", edged)
+    # cv2.imshow("Otsu Binarization", thresh)
+    # cv2.imshow("Morphological Transformations", morphed)
+    # cv2.imshow("Canny Edge Detection", edged)
+    cv2.imshow("Segments", colored_segments)
     cv2.imshow("Image Segmentation", image_with_contours)
 
 
