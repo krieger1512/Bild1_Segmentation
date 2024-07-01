@@ -31,15 +31,14 @@ def plot_rgb(image, title):
     plt.axis("off")
 
 
-def canny_segment(
+def suzuki_segment(
     image_name,
     resize_ratio,
     blurring_kernel_size,
-    canny_maxVal,
-    canny_minVal,
     morph_type,
     morph_kernel_size,
     morph_iterations,
+    retrieval_mode,
 ):
 
     # Import image
@@ -75,20 +74,16 @@ def canny_segment(
     )
     # plot_gray(morphed, "Morphed Image")
 
-    # Apply Canny edge detection
-    # Link: https://docs.opencv.org/4.x/da/d22/tutorial_py_canny.html
-    edged = cv2.Canny(morphed, canny_minVal, canny_maxVal, apertureSize=3)
-    # plot_gray(edged, "Canny Edge Detection")
-
-    # Detect all contours in Canny-edged image
-    contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # Detect all contours in morphed image with Suzuki algorithm
+    contours, _ = cv2.findContours(morphed, retrieval_mode, cv2.CHAIN_APPROX_SIMPLE)
     image_with_contours = cv2.drawContours(image.copy(), contours, -1, (0, 255, 0), 1)
     # plot_rgb(image_with_contours, "Segmented Image")
 
     colored_segments = color_segments(image, contours)
+    # plot_rgb(colored_segments, "Segments")
 
     # plt.show()
-    return thresh, morphed, edged, colored_segments, image_with_contours
+    return thresh, morphed, colored_segments, image_with_contours
 
 
 def color_segments(image, contours):
@@ -104,24 +99,22 @@ def color_segments(image, contours):
 
 
 def update_image(x):
-    window_name = "Canny Controller"
+    window_name = "Suzuki Controller"
 
-    thresh, morphed, edged, colored_segments, image_with_contours = canny_segment(
+    thresh, morphed, colored_segments, image_with_contours = suzuki_segment(
         image_name=str(get_value("Image", window_name)) + ".jpg",
         resize_ratio=get_value("Resize(%)", window_name),
         blurring_kernel_size=get_kernel_size("Blur KS", window_name),
-        canny_minVal=get_value("Canny Min", window_name),
-        canny_maxVal=get_value("Canny Max", window_name),
         morph_type=get_type("Open/Close", window_name),
         morph_kernel_size=get_kernel_size("Morph KS", window_name),
         morph_iterations=get_value("Morph Ite", window_name),
+        retrieval_mode=get_type("Retr Mode", window_name),
     )
 
-    # cv2.imshow("Otsu Binarization", thresh)
-    # cv2.imshow("Morphological Transformations", morphed)
-    # cv2.imshow("Canny Edge Detection", edged)
+    cv2.imshow("Otsu Binarization", thresh)
+    cv2.imshow("Morphological Transformations", morphed)
     cv2.imshow("Segments", colored_segments)
-    cv2.imshow("Image Segmentation", image_with_contours)
+    # cv2.imshow("Image Segmentation", image_with_contours)
 
 
 def get_value(trackbar_name, window_name):
@@ -141,15 +134,16 @@ def get_kernel_size(trackbar_name, window_name):
 
 def get_type(trackbar_name, window_name):
     type = cv2.getTrackbarPos(trackbar_name, window_name)
-    return cv2.MORPH_OPEN if type == 0 else cv2.MORPH_CLOSE
+    if trackbar_name == "Open/Close":
+        return cv2.MORPH_OPEN if type == 0 else cv2.MORPH_CLOSE
+    elif trackbar_name == "Retr Mode":
+        return cv2.RETR_EXTERNAL if type == 0 else cv2.RETR_TREE
 
 
-def create_trackbar_window(
-    number_of_images, kernel_size_limit, iteration_limit, canny_thresh
-):
-    window_name = "Canny Controller"
+def create_trackbar_window(number_of_images, kernel_size_limit, iteration_limit):
+    window_name = "Suzuki Controller"
     cv2.namedWindow(window_name)
-    cv2.resizeWindow(window_name, 1000, 309)
+    cv2.resizeWindow(window_name, 1000, 269)
 
     cv2.createTrackbar("Image", window_name, 1, number_of_images, update_image)
     cv2.setTrackbarMin("Image", window_name, 1)
@@ -160,12 +154,6 @@ def create_trackbar_window(
     cv2.createTrackbar("Blur KS", window_name, 3, kernel_size_limit, update_image)
     cv2.setTrackbarMin("Blur KS", window_name, 3)
 
-    cv2.createTrackbar("Canny Min", window_name, 50, canny_thresh, update_image)
-    cv2.setTrackbarMin("Canny Min", window_name, 1)
-
-    cv2.createTrackbar("Canny Max", window_name, 180, 254, update_image)
-    cv2.setTrackbarMin("Canny Max", window_name, canny_thresh)
-
     cv2.createTrackbar("Open/Close", window_name, 0, 1, update_image)
 
     cv2.createTrackbar("Morph KS", window_name, 3, kernel_size_limit, update_image)
@@ -174,25 +162,26 @@ def create_trackbar_window(
     cv2.createTrackbar("Morph Ite", window_name, 1, iteration_limit, update_image)
     cv2.setTrackbarMin("Morph Ite", window_name, 1)
 
+    cv2.createTrackbar("Retr Mode", window_name, 0, 1, update_image)
+
 
 if __name__ == "__main__":
 
     # If you want to check the interim results during segmentation,
-    # uncomment the plot_gray()/plot_rgb() and the final plt.show() in canny_segment()
+    # uncomment the plot_gray()/plot_rgb() and the final plt.show() in suzuki_segment()
 
-    # canny_segment(
-    #     image_name="3.jpg",
-    #     resize_ratio=1,
+    # suzuki_segment(
+    #     image_name="1.jpg",
+    #     resize_ratio=0.25,
     #     blurring_kernel_size=(5, 5),
-    #     canny_minVal=50,
-    #     canny_maxVal=180,
-    #     morph_type=cv2.MORPH_OPEN,  # Image with black background: Open
-    #     morph_kernel_size=(3, 3),
-    #     morph_iterations=3,
+    #     morph_type=cv2.MORPH_CLOSE,  # Image with black background: Open
+    #     morph_kernel_size=(5, 5),
+    #     morph_iterations=2,
+    #     retrieval_mode=cv2.RETR_EXTERNAL,
     # )
 
     # If you want to check the influence of different parameters on the segmentation,
-    # comment out all the plot_gray()/plot_rgb() and the final plt.show() in canny_segment()
+    # comment out all the plot_gray()/plot_rgb() and the final plt.show() in suzuki_segment()
 
     input_images = os.listdir(os.path.join(os.getcwd(), "input"))
     jpg_files = [file for file in input_images if file.lower().endswith((".jpg"))]
@@ -200,7 +189,6 @@ if __name__ == "__main__":
         number_of_images=len(jpg_files),
         kernel_size_limit=13,
         iteration_limit=40,
-        canny_thresh=120,
     )
     while True:
         update_image(0)

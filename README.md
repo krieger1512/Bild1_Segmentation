@@ -66,7 +66,7 @@
 - [Overview](#overview)
 - [Setup/Preconfiguration](#setuppreconfiguration)
 - [Watershed](#watershed)
-- [Canny](#canny)
+- [Suzuki](#suzuki)
 - [Niblack](#niblack)
 - [References](#references)
 
@@ -95,16 +95,16 @@ This project aims to
 
 The project is divided into three parts:
 1. Image segmentation with watershed algorithm (``watershed.py``) &rarr; See section [Watershed](#watershed)
-2. Image segmentation with Canny edge detection (``canny.py``) &rarr; See section [Canny](#canny)
+2. Image segmentation with Suzuki algorithm (``suzuki.py``) &rarr; See section [Suzuki](#suzuki)
 3. Image segmentation with Niblack edge detection (``niblack.py``) &rarr; See section [Niblack](#niblack)
 
-The three parts differ in the algorithms used for binarization and labeling. The project focuses on using the OpenCV implementation of these algorithms to segment images, thus details about them will only be referenced.
+The three parts differ in the algorithms used for binarization and labeling segments / finding contours. The project focuses on using the OpenCV implementation of these algorithms to segment images, thus details about them will only be referenced.
 
-| Part      | Binarization         | Labelling     |
-| --------- | -------------------- | ------------- |
-| Watershed | Otsu [1]             | Watershed [4] |
-| Canny     | Otsu [1] + Canny [2] | Suzuki [5]    |
-| Niblack   | Niblack [3]          | Suzuki [5]    |
+| Part      | Binarization | Labelling Segments / Finding Contours |
+| --------- | ------------ | ------------------------------------- |
+| Watershed | Otsu [1]     | Watershed [2]                         |
+| Suzuki    | Otsu [1]     | Suzuki [3]                            |
+| Niblack   | Niblack [4]  | Suzuki [3]                            |
 
 
 
@@ -153,7 +153,7 @@ Follow these steps in your terminal (e.g., Command Prompt on Windows):
 
 # Watershed
 
-This part uses [Otsu's method](https://learnopencv.com/otsu-thresholding-with-opencv/) for binarization and [Watershed algorithm](https://en.wikipedia.org/wiki/Watershed_(image_processing)) for labelling.
+This part uses [Otsu's method](https://learnopencv.com/otsu-thresholding-with-opencv/) for binarization and [Watershed algorithm](https://en.wikipedia.org/wiki/Watershed_(image_processing)) for labelling segments.
 
 **Step-by-Step Architecture**
 
@@ -188,6 +188,8 @@ flowchart LR
 - ``Import & Resize``: 
   
   Load the input image that needs to be segmented and resize it if necessary.
+
+  ![](input/1.jpg)
 - ``Convert to Grayscale``:
   
   Convert the imported image to grayscale. Each pixel in the image now ranges from 0 to 255.
@@ -243,7 +245,7 @@ This project provides a controller for checking the influences of different para
 - ``Image``: ID of the image that needs to be segmented. These images can be found inside the ``input`` folder. 
 - ``Resize(%)``: Downscale ratio, ranging from 1% to 100%
 - ``Blur KS``: Kernel size of Gaussian blur. Must be an odd number. By default the even-number kernel size will be incremented to make it odd-number.
-- ``Open/Close``: Morphological transformation to be applied: `0` means opening, where `1` means closing.
+- ``Open/Close``: Morphological transformation to be applied: `0` means opening, while `1` means closing.
 - ``Morph KS``: Kernel size of the selected morphological transformation. Must be an odd number. By default the even kernel size will be incremented to make it odd.
 - ``Morph Ite``: Number of iterations (times) the selected morphological transformation is applied.
 - ``Dilate KS``: Kernel size of the dilation used for finding sure background pixels. Must be an odd number. By default the even kernel size will be incremented to make it odd.
@@ -253,9 +255,9 @@ This project provides a controller for checking the influences of different para
 
 <div style="page-break-after: always"></div>
 
-# Canny
+# Suzuki
 
-**Description**
+This part uses [Otsu's method](https://learnopencv.com/otsu-thresholding-with-opencv/) for binarization and [Suzuki algorithm](https://theailearner.com/2019/11/19/suzukis-contour-tracing-algorithm-opencv-python/) for finding contours.
 
 **Step-by-Step Architecture**
 
@@ -271,17 +273,61 @@ flowchart LR
 
   morph[Apply\nMorphological Transformation]
 
-  canny[Apply\nCanny Edge Detection]
-
   suzuki[Apply\nSuzuki Algorithm]
   
-  import_resize --> convert_grayscale --> gaussian_blur --> otsu --> morph --> canny --> suzuki
+  import_resize --> convert_grayscale --> gaussian_blur --> otsu --> morph --> suzuki 
   
 ```
 
 **Step-by-Step Explanation**
 
-**Workstation**
+- ``Import & Resize``: 
+  
+  Load the input image that needs to be segmented and resize it if necessary.
+
+  ![](input/1.jpg)
+- ``Convert to Grayscale``:
+  
+  Convert the imported image to grayscale. Each pixel in the image now ranges from 0 to 255.
+
+  ![](doc_img/suzuki_grayscale.png)
+- ``Apply Gaussian Blur``:
+  
+  Blur the grayscale image with Gaussian blur for better binarization result in the subsequent step.
+
+  ![](doc_img/suzuki_blur.png)
+- ``Apply Otsu Binarization``:
+  
+  Use Otsu's method to divide the blurred image in foreground pixels (i.e., pixels representing objects) which are set to 255 and background pixels which are set to 0. Otsu's method determines (global) threshold automatically (i.e., adaptive thresholding).
+
+  ![](doc_img/suzuki_binary.png)
+- ``Apply Morphological Transformation``
+  
+  Apply morphological transformation to further reduce "noise" in the binary image.
+
+  ![](doc_img/suzuki_morph.png)
+- ``Apply Suzuki Algorithm``
+
+  Apply the Suzuki algorithm to find contours in the morphed image. In the example we are only interested in the contours of the biggest objects (i.e., the three paintings, the statue, and the statue pedestal), and do not care about the smaller shapes in the paintings. Thus in the source code, the ``retrieval_mode`` is specified as ``RETR_EXTERNAL``, meaning we retrieve only the outer-most contours.
+
+  ![](doc_img/suzuki_segments.png)
+
+  ![](doc_img/suzuki_final.png)
+
+
+**Controller**
+
+![](doc_img/suzuki_controller.png)
+
+This project provides a controller for checking the influences of different parameters (that control the above steps) on the interim/final segmentation results. Below is the list of available parameters and their meanings:
+- ``Image``: ID of the image that needs to be segmented. These images can be found inside the ``input`` folder. 
+- ``Resize(%)``: Downscale ratio, ranging from 1% to 100%
+- ``Blur KS``: Kernel size of Gaussian blur. Must be an odd number. By default the even-number kernel size will be incremented to make it odd-number.
+- ``Open/Close``: Morphological transformation to be applied: `0` means opening, while `1` means closing.
+- ``Morph KS``: Kernel size of the selected morphological transformation. Must be an odd number. By default the even kernel size will be incremented to make it odd.
+- ``Morph Ite``: Number of iterations (times) the selected morphological transformation is applied.
+- ``Retr Mode``: Retrieval mode for retrieving contours: `0` means ``RETR_EXTERNAL`` (get the outer-most contours and ignore the inner contours), while `1` means ``RETR_TREE`` (get all contours and create a full family hierarchy list).
+
 
 <div style="page-break-after: always"></div>
 
@@ -319,11 +365,9 @@ flowchart LR
 
 [1] N. Otsu, “A Threshold Selection Method from Gray-Level Histograms,” IEEE Transactions on Systems, Man, and Cybernetics, vol. 9, no. 1, pp. 62–66, Jan. 1979, doi: https://doi.org/10.1109/tsmc.1979.4310076.
 
-[2] J. Canny, “A Computational Approach to Edge Detection,” IEEE Transactions on Pattern Analysis and Machine Intelligence, vol. PAMI-8, no. 6, pp. 679–698, Nov. 1986, doi: https://doi.org/10.1109/tpami.1986.4767851.
+[2] S. Beucher and C. Lantuéjoul, "Use of Watersheds in Contour Detection," in Proc. International Workshop on Image Processing: Real-time Edge and Motion Detection/Estimation, Rennes, France, 1979.
 
-[3] W. Niblack, An Introduction to Digital Image Processing. Prentice Hall, 1986.
+[3] S. Suzuki and K. be, “Topological structural analysis of digitized binary images by border following,” Computer Vision, Graphics, and Image Processing, vol. 30, no. 1, pp. 32–46, Apr. 1985, doi: https://doi.org/10.1016/0734-189x(85)90016-7.
 
-[4] S. Beucher and C. Lantuéjoul, "Use of Watersheds in Contour Detection," in Proc. International Workshop on Image Processing: Real-time Edge and Motion Detection/Estimation, Rennes, France, 1979.
-
-[5] S. Suzuki and K. be, “Topological structural analysis of digitized binary images by border following,” Computer Vision, Graphics, and Image Processing, vol. 30, no. 1, pp. 32–46, Apr. 1985, doi: https://doi.org/10.1016/0734-189x(85)90016-7.
+[4] W. Niblack, An Introduction to Digital Image Processing. Prentice Hall, 1986.
 ‌
