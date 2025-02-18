@@ -155,23 +155,23 @@ This part uses [Otsu's method](https://learnopencv.com/otsu-thresholding-with-op
 flowchart LR
   import_resize[Import & Resize]
 
-  convert_grayscale[Convert\nto Grayscale]
+  convert_grayscale[Convert to Grayscale]
 
-  gaussian_blur[Apply\nGaussian Blur]
+  gaussian_blur[Apply Gaussian Blur]
 
-  otsu[Apply\nOtsu Binarization]
+  otsu[Apply Otsu Binarization]
 
-  morph[Apply\nMorphological Transformation]
+  morph[Apply Morphological Transformation]
   
-  find_bg[Determine\nSure Background]
+  find_bg[Determine Sure Background]
   
-  find_fg[Determine\nSure Foreground]
+  find_fg[Determine Sure Foreground]
   
-  find_unknown[Determine\nUnknown Region]
+  find_unknown[Determine Unknown Region]
   
-  marker[Apply\nConnected Component Labelling]
+  marker[Apply Connected Component Labelling]
   
-  watershed[Apply\nWatershed Algorithm]
+  watershed[Apply Watershed Algorithm]
   
   import_resize --> convert_grayscale --> gaussian_blur --> otsu --> morph --> find_bg & find_fg --> find_unknown --> marker --> watershed
   
@@ -258,15 +258,15 @@ This part uses [Otsu's method](https://learnopencv.com/otsu-thresholding-with-op
 flowchart LR
   import_resize[Import & Resize]
 
-  convert_grayscale[Convert\nto Grayscale]
+  convert_grayscale[Convert to Grayscale]
 
-  gaussian_blur[Apply\nGaussian Blur]
+  gaussian_blur[Apply Gaussian Blur]
 
-  otsu[Apply\nOtsu Binarization]
+  otsu[Apply Otsu Binarization]
 
-  morph[Apply\nMorphological Transformation]
+  morph[Apply Morphological Transformation]
 
-  suzuki[Apply\nSuzuki Algorithm]
+  suzuki[Apply Suzuki Algorithm]
   
   import_resize --> convert_grayscale --> gaussian_blur --> otsu --> morph --> suzuki 
   
@@ -332,15 +332,15 @@ This part uses [Niblack's method](https://craftofcoding.wordpress.com/2021/09/30
 flowchart LR
   import_resize[Import & Resize]
 
-  convert_grayscale[Convert\nto Grayscale]
+  convert_grayscale[Convert to Grayscale]
 
-  gaussian_blur[Apply\nGaussian Blur]
+  gaussian_blur[Apply Gaussian Blur]
 
-  niblack[Apply\nNiblack Binarization]
+  niblack[Apply Niblack Binarization]
 
-  morph[Apply\nMorphological Transformation]
+  morph[Apply Morphological Transformation]
 
-  suzuki[Apply\nSuzuki Algorithm]
+  suzuki[Apply Suzuki Algorithm]
 
   import_resize --> convert_grayscale --> gaussian_blur --> niblack --> morph --> suzuki 
   
