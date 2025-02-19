@@ -55,7 +55,7 @@
 <div style="text-align: center;">
   <font size="3"><strong>Submission Date</strong></font>
   <br>
-  <font size="4">July 22nd, 2024</font>
+  <font size="4">February 19th, 2025</font>
 </div>
 
 
